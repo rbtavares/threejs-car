@@ -3,9 +3,9 @@ import * as THREE from 'three';
 import { OrbitControls } from './three/addons/OrbitControls.js'
 
 // Starting Position
-const START_POS = { x: 0, y: 0, z: 2 }
+const START_POS = { x: 0, y: 3, z: 2 }
 
-// Floor Paramteres
+// Floor Parameters
 const FLOOR_HEIGHT = 0.05;
 const FLOOR_SIDE = 6;
 const FLOOR_COLOR = 0xffffff;
@@ -18,8 +18,12 @@ const CAR_BODY_WIDTH = 0.5;
 const CAR_WHEEL_RADIUS = 0.15;
 const CAR_WHEEL_THICKNESS = 0.1;
 
+const SPEED = 0.015;
+
 // Global Variables
 var scene, camera, renderer, controls;
+var car;
+var keys = {};
 
 // Draw Floor Function
 function drawFloor(scene) {
@@ -35,7 +39,7 @@ function drawFloor(scene) {
 // Draw Car Function
 function drawCar(scene) {
 
-    const car = new THREE.Group();
+    car = new THREE.Group();
     const bodyMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     const wheelMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
 
@@ -102,6 +106,10 @@ function setup() {
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
+    // Keyboard Handler
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
     // Add Orbit Controls
     controls = new OrbitControls(camera, renderer.domElement);
 
@@ -110,7 +118,31 @@ function setup() {
 
 }
 
+function handleKeyDown(event) {
+    console.log(event.code)
+    keys[event.code] = true;
+}
+
+function handleKeyUp(event) {
+    keys[event.code] = false;
+}
+
 function animate() {
+
+    if (keys['KeyW']) {
+        car.position.z += SPEED * Math.sin(car.rotation.y);
+        car.position.x -= SPEED * Math.cos(car.rotation.y);
+    }
+    if (keys['KeyS']) {
+        car.position.z -= SPEED * Math.sin(car.rotation.y);
+        car.position.x += SPEED * Math.cos(car.rotation.y);
+    }
+    if (keys['KeyA']) {
+        car.rotation.y += 0.03; // Adjust the rotation as needed
+    }
+    if (keys['KeyD']) {
+        car.rotation.y -= 0.03; // Adjust the rotation as needed
+    }
 
     // Update Orbit Controls
     controls.update();
