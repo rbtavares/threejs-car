@@ -18,6 +18,9 @@ const CAR_BODY_WIDTH = 0.5;
 const CAR_WHEEL_RADIUS = 0.15;
 const CAR_WHEEL_THICKNESS = 0.1;
 
+const CAR_WHEEL_ROTATION_FRONT = Math.PI / 6;
+const CAR_WHEEL_ROTATION_REAR = Math.PI / (6 * 3);
+
 const SPEED = 0.015;
 
 // Global Variables
@@ -60,14 +63,14 @@ function drawCar(scene) {
 
     for (let i = 0; i < 4; i++) {
         const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial)
-        wheel.rotateX(Math.PI/2);
+        wheel.rotateX(Math.PI / 2);
         wheels.push(wheel);
         car.add(wheel)
     }
 
-    wheels[0].translateX(  CAR_BODY_LENGTH / 2 - CAR_WHEEL_RADIUS).translateY(  CAR_BODY_WIDTH / 2 + CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2)
-    wheels[1].translateX(  CAR_BODY_LENGTH / 2 - CAR_WHEEL_RADIUS).translateY(- CAR_BODY_WIDTH / 2 - CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2)
-    wheels[2].translateX(- CAR_BODY_LENGTH / 2 + CAR_WHEEL_RADIUS).translateY(  CAR_BODY_WIDTH / 2 + CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2)
+    wheels[0].translateX(CAR_BODY_LENGTH / 2 - CAR_WHEEL_RADIUS).translateY(CAR_BODY_WIDTH / 2 + CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2)
+    wheels[1].translateX(CAR_BODY_LENGTH / 2 - CAR_WHEEL_RADIUS).translateY(- CAR_BODY_WIDTH / 2 - CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2)
+    wheels[2].translateX(- CAR_BODY_LENGTH / 2 + CAR_WHEEL_RADIUS).translateY(CAR_BODY_WIDTH / 2 + CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2)
     wheels[3].translateX(- CAR_BODY_LENGTH / 2 + CAR_WHEEL_RADIUS).translateY(- CAR_BODY_WIDTH / 2 - CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2)
 
     // Add Car to Scene
@@ -80,7 +83,7 @@ function drawCar(scene) {
 // Setup Function
 function setup() {
 
-    // Intialize Scene, Camera and Renderer
+    // Initialize Scene, Camera and Renderer
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer();
@@ -107,8 +110,8 @@ function setup() {
     });
 
     // Keyboard Handler
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("keydown", (event) => { keys[event.code] = true; });
+    window.addEventListener("keyup", (event) => { keys[event.code] = false; });
 
     // Add Orbit Controls
     controls = new OrbitControls(camera, renderer.domElement);
@@ -118,31 +121,68 @@ function setup() {
 
 }
 
-function handleKeyDown(event) {
-    console.log(event.code)
-    keys[event.code] = true;
+// Car Movement Functions
+function moveForward() {
+    car.position.z += SPEED * Math.sin(car.rotation.y);
+    car.position.x -= SPEED * Math.cos(car.rotation.y);
 }
 
-function handleKeyUp(event) {
-    keys[event.code] = false;
+function moveBackward() {
+    car.position.z -= SPEED * Math.sin(car.rotation.y);
+    car.position.x += SPEED * Math.cos(car.rotation.y);
 }
 
+function turnRight() {
+    car.rotation.y += 0.03;
+}
+
+function turnLeft() {
+    car.rotation.y -= 0.03;
+}
+
+function rotateWheelsLeft() {
+    car.children[2].rotation.z = - CAR_WHEEL_ROTATION_REAR;
+    car.children[3].rotation.z = - CAR_WHEEL_ROTATION_REAR;
+    car.children[4].rotation.z = CAR_WHEEL_ROTATION_FRONT;
+    car.children[5].rotation.z = CAR_WHEEL_ROTATION_FRONT;
+}
+
+function rotateWheelsRight() {
+    car.children[2].rotation.z = CAR_WHEEL_ROTATION_REAR;
+    car.children[3].rotation.z = CAR_WHEEL_ROTATION_REAR;
+    car.children[4].rotation.z = - CAR_WHEEL_ROTATION_FRONT;
+    car.children[5].rotation.z = - CAR_WHEEL_ROTATION_FRONT;
+}
+
+function resetWheelRotation() {
+    car.children[2].rotation.z = 0;
+    car.children[3].rotation.z = 0;
+    car.children[4].rotation.z = 0;
+    car.children[5].rotation.z = 0;
+}
+
+// Animate Function
 function animate() {
 
+    // Car Fwd/Bwd
     if (keys['KeyW']) {
-        car.position.z += SPEED * Math.sin(car.rotation.y);
-        car.position.x -= SPEED * Math.cos(car.rotation.y);
+        if (keys['KeyA']) { turnRight() }
+        else if (keys['KeyD']) { turnLeft() }
+        moveForward()
     }
+
     if (keys['KeyS']) {
-        car.position.z -= SPEED * Math.sin(car.rotation.y);
-        car.position.x += SPEED * Math.cos(car.rotation.y);
+        if (keys['KeyD']) { turnRight() }
+        else if (keys['KeyA']) { turnLeft() }
+        moveBackward()
     }
+
     if (keys['KeyA']) {
-        car.rotation.y += 0.03; // Adjust the rotation as needed
-    }
-    if (keys['KeyD']) {
-        car.rotation.y -= 0.03; // Adjust the rotation as needed
-    }
+        rotateWheelsRight();
+    } else if (keys['KeyD']) {
+        rotateWheelsLeft();
+    } else
+        resetWheelRotation();
 
     // Update Orbit Controls
     controls.update();
