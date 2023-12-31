@@ -2,30 +2,67 @@
 import * as THREE from 'three';
 import { OrbitControls } from './three/addons/OrbitControls.js'
 
-// Starting Position
-const START_POS = { x: 3, y: 3, z: 3 }
+// Camera
+var camera;
+const CAM_INITIAL_POS = { x: 3, y: 3, z: 3 }
+const CAM_FOV = 75;
+const CAM_NEAR = 0.1;
+const CAM_FAR = 1000;
 
-// Floor Parameters
+// Renderer
+var renderer;
+const RND_ENABLE_SHADOWS = true;
+
+// Floor
 const FLOOR_HEIGHT = 0.05;
 const FLOOR_SIDE = 6;
 const FLOOR_COLOR = 0xffffff;
 
-// Car Parameters
+// Car
+var car;
+var wheels;
+const SPEED = 0.015;
 const CAR_BODY_LENGTH = 1;
 const CAR_BODY_HEIGHT = 0.2;
 const CAR_BODY_WIDTH = 0.5;
-
+const CAR_BODY_COLOR = 0xff0000;
 const CAR_WHEEL_RADIUS = 0.15;
 const CAR_WHEEL_THICKNESS = 0.1;
-
 const CAR_WHEEL_ROTATION_FRONT = Math.PI / 6;
 const CAR_WHEEL_ROTATION_REAR = Math.PI / (6 * 3);
+const CAR_WHEEL_COLOR = 0x222222;
 
-const SPEED = 0.015;
+// Lights
+const AMBIENT_LIGHT_COLOR = 0x404040;
 
-// Global Variables
-var scene, camera, renderer, controls;
-var car;
+const LIGHTS_DATA = [
+    {
+        color: 0xffffff,
+        intensity: 15,
+        distance: 100,
+        position: [-2, 0.75, -2],
+    },
+    {
+        color: 0xffffff,
+        intensity: 15,
+        distance: 100,
+        position: [2, 0.75, 2],
+    }
+];
+
+const SHADOWS_DATA = {
+    mapSize: 512,
+    near: 0.5,
+    far: 500
+};
+
+// Controls
+var controls;
+
+// Scene
+var scene;
+
+// Active Key Table
 var keys = {};
 
 // Draw Floor Function
@@ -35,6 +72,7 @@ function drawFloor(scene) {
     let floorMaterial = new THREE.MeshPhongMaterial({ color: FLOOR_COLOR });
     let floor = new THREE.Mesh(floorGeometry, floorMaterial);
     floor.translateY(- 0.5 - FLOOR_HEIGHT / 2);
+    floor.receiveShadow = true;
     scene.add(floor);
 
 }
@@ -43,26 +81,32 @@ function drawFloor(scene) {
 function drawCar(scene) {
 
     car = new THREE.Group();
-    const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
-    const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+    const bodyMaterial = new THREE.MeshPhongMaterial({ color: CAR_BODY_COLOR, shininess: 64 });
+    const wheelMaterial = new THREE.MeshPhongMaterial({ color: CAR_WHEEL_COLOR, shininess: 32 });
 
     // Car Middle
     const middleGeometry = new THREE.BoxGeometry(CAR_BODY_LENGTH, CAR_BODY_HEIGHT, CAR_BODY_WIDTH);
     const middle = new THREE.Mesh(middleGeometry, bodyMaterial);
+    middle.castShadow = true;
+    middle.receiveShadow = false;
     car.add(middle);
 
     // Car Top
-    const topGeometry = new THREE.BoxGeometry(CAR_BODY_LENGTH * (2 / 3), CAR_BODY_HEIGHT, CAR_BODY_WIDTH);
+    const topGeometry = new THREE.BoxGeometry(CAR_BODY_LENGTH * (1 / 3), CAR_BODY_HEIGHT, CAR_BODY_WIDTH);
     const top = new THREE.Mesh(topGeometry, bodyMaterial);
     top.translateY(CAR_BODY_HEIGHT);
+    top.castShadow = true;
+    top.receiveShadow = false;
     car.add(top);
 
     // Car Wheels
-    const wheelGeometry = new THREE.CylinderGeometry(CAR_WHEEL_RADIUS, CAR_WHEEL_RADIUS, CAR_WHEEL_THICKNESS, 16);
-    const wheels = [];
+    const wheelGeometry = new THREE.CylinderGeometry(CAR_WHEEL_RADIUS, CAR_WHEEL_RADIUS, CAR_WHEEL_THICKNESS, 6);
+    wheels = [];
 
     for (let i = 0; i < 4; i++) {
         const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+        wheel.castShadow = true;
+        wheel.receiveShadow = false;
         wheel.rotateX(Math.PI / 2);
         wheels.push(wheel);
         car.add(wheel);
@@ -75,20 +119,30 @@ function drawCar(scene) {
 
     // Add Car to Scene
     car.translateY(- 0.5 + CAR_BODY_HEIGHT / 2 + CAR_WHEEL_RADIUS)
-
     scene.add(car);
 
 }
 
 function addLights(scene) {
 
-    // Add a point light
-    const pointLight = new THREE.PointLight(0xffffff, 15, 100);
-    pointLight.position.set(0, 0.75, 0);
-    scene.add(pointLight);
+    // Point Lights
+    for (let i = 0; i < LIGHTS_DATA.length; i++) {
+        const LDATA = LIGHTS_DATA[i];
+
+        const light = new THREE.PointLight(LDATA.color, LDATA.intensity, LDATA.distance);
+        light.position.set(...LDATA.position);
+
+        light.castShadow = true;
+        light.shadow.mapSize.width = SHADOWS_DATA.mapSize;
+        light.shadow.mapSize.height = SHADOWS_DATA.mapSize;
+        light.shadow.camera.near = SHADOWS_DATA.near;
+        light.shadow.camera.far = SHADOWS_DATA.far;
+
+        scene.add(light);
+    }
 
     // Ambient light to add some overall illumination
-    const ambientLight = new THREE.AmbientLight(0x404040); 
+    const ambientLight = new THREE.AmbientLight(AMBIENT_LIGHT_COLOR);
     scene.add(ambientLight);
 
 }
@@ -96,13 +150,29 @@ function addLights(scene) {
 // Setup Function
 function setup() {
 
-    // Initialize Scene, Camera and Renderer
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer();
+    // Camera
+    camera = new THREE.PerspectiveCamera(CAM_FOV, window.innerWidth / window.innerHeight, CAM_NEAR, CAM_FAR);
 
+    camera.position.x = CAM_INITIAL_POS.x
+    camera.position.y = CAM_INITIAL_POS.y
+    camera.position.z = CAM_INITIAL_POS.z
+
+    // Renderer
+    renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
+
+    if (RND_ENABLE_SHADOWS) {
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
+
     document.body.appendChild(renderer.domElement);
+
+    // Scene
+    scene = new THREE.Scene();
+
+    // Orbit Controls
+    controls = new OrbitControls(camera, renderer.domElement);
 
     // Draw Floor
     drawFloor(scene);
@@ -112,11 +182,6 @@ function setup() {
 
     // Add Lights
     addLights(scene);
-
-    // Adjust Camera Position
-    camera.position.x = START_POS.x
-    camera.position.y = START_POS.y
-    camera.position.z = START_POS.z
 
     // Window Resize Handler
     window.addEventListener("resize", () => {
@@ -128,9 +193,6 @@ function setup() {
     // Keyboard Handler
     window.addEventListener("keydown", (event) => { keys[event.code] = true; });
     window.addEventListener("keyup", (event) => { keys[event.code] = false; });
-
-    // Add Orbit Controls
-    controls = new OrbitControls(camera, renderer.domElement);
 
     // Call Animate Function
     animate();
@@ -156,25 +218,25 @@ function turnLeft() {
     car.rotation.y -= 0.03;
 }
 
+// Car Wheels Movement
 function rotateWheelsLeft() {
-    car.children[2].rotation.z = - CAR_WHEEL_ROTATION_REAR;
-    car.children[3].rotation.z = - CAR_WHEEL_ROTATION_REAR;
-    car.children[4].rotation.z = CAR_WHEEL_ROTATION_FRONT;
-    car.children[5].rotation.z = CAR_WHEEL_ROTATION_FRONT;
+    wheels[0].rotation.z = - CAR_WHEEL_ROTATION_REAR;
+    wheels[1].rotation.z = - CAR_WHEEL_ROTATION_REAR;
+    wheels[2].rotation.z = CAR_WHEEL_ROTATION_FRONT;
+    wheels[3].rotation.z = CAR_WHEEL_ROTATION_FRONT;
 }
 
 function rotateWheelsRight() {
-    car.children[2].rotation.z = CAR_WHEEL_ROTATION_REAR;
-    car.children[3].rotation.z = CAR_WHEEL_ROTATION_REAR;
-    car.children[4].rotation.z = - CAR_WHEEL_ROTATION_FRONT;
-    car.children[5].rotation.z = - CAR_WHEEL_ROTATION_FRONT;
+    wheels[0].rotation.z = CAR_WHEEL_ROTATION_REAR;
+    wheels[1].rotation.z = CAR_WHEEL_ROTATION_REAR;
+    wheels[2].rotation.z = - CAR_WHEEL_ROTATION_FRONT;
+    wheels[3].rotation.z = - CAR_WHEEL_ROTATION_FRONT;
 }
 
 function resetWheelRotation() {
-    car.children[2].rotation.z = 0;
-    car.children[3].rotation.z = 0;
-    car.children[4].rotation.z = 0;
-    car.children[5].rotation.z = 0;
+    for (let i = 0; i < wheels.length; i++) {
+        wheels[i].rotation.z = 0;
+    }
 }
 
 // Animate Function
@@ -193,6 +255,7 @@ function animate() {
         moveBackward()
     }
 
+    // Car Turn
     if (keys['KeyA']) {
         rotateWheelsRight();
     } else if (keys['KeyD']) {
