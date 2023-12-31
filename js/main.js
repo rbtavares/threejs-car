@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from './three/addons/OrbitControls.js'
 
 // Starting Position
-const START_POS = { x: 0, y: 3, z: 2 }
+const START_POS = { x: 3, y: 3, z: 3 }
 
 // Floor Parameters
 const FLOOR_HEIGHT = 0.05;
@@ -32,9 +32,9 @@ var keys = {};
 function drawFloor(scene) {
 
     let floorGeometry = new THREE.BoxGeometry(FLOOR_SIDE, FLOOR_HEIGHT, FLOOR_SIDE);
-    let floorMaterial = new THREE.MeshBasicMaterial({ color: FLOOR_COLOR });
-    let floor = new THREE.Mesh(floorGeometry, floorMaterial)
-    floor.translateY(- 0.5 - FLOOR_HEIGHT / 2)
+    let floorMaterial = new THREE.MeshPhongMaterial({ color: FLOOR_COLOR });
+    let floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.translateY(- 0.5 - FLOOR_HEIGHT / 2);
     scene.add(floor);
 
 }
@@ -43,8 +43,8 @@ function drawFloor(scene) {
 function drawCar(scene) {
 
     car = new THREE.Group();
-    const bodyMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    const wheelMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+    const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
 
     // Car Middle
     const middleGeometry = new THREE.BoxGeometry(CAR_BODY_LENGTH, CAR_BODY_HEIGHT, CAR_BODY_WIDTH);
@@ -54,29 +54,42 @@ function drawCar(scene) {
     // Car Top
     const topGeometry = new THREE.BoxGeometry(CAR_BODY_LENGTH * (2 / 3), CAR_BODY_HEIGHT, CAR_BODY_WIDTH);
     const top = new THREE.Mesh(topGeometry, bodyMaterial);
-    top.translateY(CAR_BODY_HEIGHT)
-    car.add(top)
+    top.translateY(CAR_BODY_HEIGHT);
+    car.add(top);
 
     // Car Wheels
     const wheelGeometry = new THREE.CylinderGeometry(CAR_WHEEL_RADIUS, CAR_WHEEL_RADIUS, CAR_WHEEL_THICKNESS, 16);
-    const wheels = []
+    const wheels = [];
 
     for (let i = 0; i < 4; i++) {
-        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial)
+        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
         wheel.rotateX(Math.PI / 2);
         wheels.push(wheel);
-        car.add(wheel)
+        car.add(wheel);
     }
 
-    wheels[0].translateX(CAR_BODY_LENGTH / 2 - CAR_WHEEL_RADIUS).translateY(CAR_BODY_WIDTH / 2 + CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2)
-    wheels[1].translateX(CAR_BODY_LENGTH / 2 - CAR_WHEEL_RADIUS).translateY(- CAR_BODY_WIDTH / 2 - CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2)
-    wheels[2].translateX(- CAR_BODY_LENGTH / 2 + CAR_WHEEL_RADIUS).translateY(CAR_BODY_WIDTH / 2 + CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2)
-    wheels[3].translateX(- CAR_BODY_LENGTH / 2 + CAR_WHEEL_RADIUS).translateY(- CAR_BODY_WIDTH / 2 - CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2)
+    wheels[0].translateX(CAR_BODY_LENGTH / 2 - CAR_WHEEL_RADIUS).translateY(CAR_BODY_WIDTH / 2 + CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2);
+    wheels[1].translateX(CAR_BODY_LENGTH / 2 - CAR_WHEEL_RADIUS).translateY(- CAR_BODY_WIDTH / 2 - CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2);
+    wheels[2].translateX(- CAR_BODY_LENGTH / 2 + CAR_WHEEL_RADIUS).translateY(CAR_BODY_WIDTH / 2 + CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2);
+    wheels[3].translateX(- CAR_BODY_LENGTH / 2 + CAR_WHEEL_RADIUS).translateY(- CAR_BODY_WIDTH / 2 - CAR_WHEEL_THICKNESS / 2).translateZ(CAR_BODY_HEIGHT / 2);
 
     // Add Car to Scene
     car.translateY(- 0.5 + CAR_BODY_HEIGHT / 2 + CAR_WHEEL_RADIUS)
 
     scene.add(car);
+
+}
+
+function addLights(scene) {
+
+    // Add a point light
+    const pointLight = new THREE.PointLight(0xffffff, 15, 100);
+    pointLight.position.set(0, 0.75, 0);
+    scene.add(pointLight);
+
+    // Ambient light to add some overall illumination
+    const ambientLight = new THREE.AmbientLight(0x404040); 
+    scene.add(ambientLight);
 
 }
 
@@ -96,6 +109,9 @@ function setup() {
 
     // Draw Car
     drawCar(scene);
+
+    // Add Lights
+    addLights(scene);
 
     // Adjust Camera Position
     camera.position.x = START_POS.x
