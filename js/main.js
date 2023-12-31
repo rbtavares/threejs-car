@@ -40,18 +40,18 @@ const LIGHTS_DATA = [
         color: 0xffffff,
         intensity: 15,
         distance: 100,
-        position: [-2, 0.75, -2],
+        position: [-2.5, 0.75, -2.5],
     },
     {
         color: 0xffffff,
         intensity: 15,
         distance: 100,
-        position: [2, 0.75, 2],
+        position: [2.5, 0.75, 2.5],
     }
 ];
 
 const SHADOWS_DATA = {
-    mapSize: 512,
+    mapSize: 2048,
     near: 0.5,
     far: 500
 };
@@ -95,12 +95,13 @@ function drawCar(scene) {
     const topGeometry = new THREE.BoxGeometry(CAR_BODY_LENGTH * (1 / 3), CAR_BODY_HEIGHT, CAR_BODY_WIDTH);
     const top = new THREE.Mesh(topGeometry, bodyMaterial);
     top.translateY(CAR_BODY_HEIGHT);
+    top.translateX(- CAR_BODY_LENGTH * (1/4));
     top.castShadow = true;
     top.receiveShadow = false;
     car.add(top);
 
     // Car Wheels
-    const wheelGeometry = new THREE.CylinderGeometry(CAR_WHEEL_RADIUS, CAR_WHEEL_RADIUS, CAR_WHEEL_THICKNESS, 6);
+    const wheelGeometry = new THREE.CylinderGeometry(CAR_WHEEL_RADIUS, CAR_WHEEL_RADIUS, CAR_WHEEL_THICKNESS, 16);
     wheels = [];
 
     for (let i = 0; i < 4; i++) {
@@ -263,6 +264,11 @@ function animate() {
     } else
         resetWheelRotation();
 
+    // Color Cycle Car
+    let dt = new Date();
+    let secs = dt.getSeconds() + (60 * dt.getMinutes()) + (60 * 60 * dt.getHours());
+    car.children[0].material.color.setHSL((secs / 86400), 100/100, 50/100);
+    
     // Update Orbit Controls
     controls.update();
 

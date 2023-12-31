@@ -1,3 +1,14 @@
 body {
     margin: 0px;
 }
+
+.repo {
+    text-shadow: 0px 0px 5px black, 0px 0px 5px black;
+    position: absolute;
+    color: white;
+    font-weight: normal;
+    text-decoration: none;
+    bottom: 10px;
+    right: 10px;
+    font-family: monospace;
+}
