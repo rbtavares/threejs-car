@@ -4,7 +4,7 @@ A very simple drivable 4-wheel car built in ThreeJS.
 
 ## About
 
-In this project, the goal was to implement a drivable 4-wheel car and it's interactions with objects, lighting and world. MMMMMMM
+In this project, the goal was to implement a drivable 4-wheel car and it's interactions with objects, lighting and world.
 
 ## Screenshot
 
