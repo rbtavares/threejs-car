@@ -1,8 +1,17 @@
 {
-  "dependencies": {
-    "three": "^0.160.0"
+  "name": "threejs-car",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^5.0.10"
+    "vite": "^5.4.1"
+  },
+  "dependencies": {
+    "three": "^0.168.0"
   }
 }
